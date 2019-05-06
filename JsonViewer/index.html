@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <title>Waaay</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+    <script src='json.js'></script>
+</head>
+
+<body>
+    <canvas id="myChart" width="400" height="400"></canvas>
+    <script>
+        var ctx = document.getElementById('myChart').getContext('2d');
+
+
+        let labels = data.map(obj => new Date(obj.dt*1000).toUTCString());
+        //let dataTemp = data.map(obj => obj.main.temp - 273.15);
+        let dataTemp = data.map(obj => obj.main.humidity);
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature',
+                    data: dataTemp,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false
+                        }
+                    }]
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
