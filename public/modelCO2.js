@@ -85,13 +85,6 @@ class TempPeopleCO2Model {
         }
     }
 
-    // 0,0375 kg/h+0,01 kg/h= 0,0475 kg
-    // 0,0475 kg / 50 m3=0,00095 kg/m3/h
-    // 0,60 kg/m3 + 0,00095=0,60095 kg/m3
-    // (0,60095 kg/m3*50m3) - 0,60095 kg = 
-    
-
-
     ventilationUpdate(){
         if (this.rails.length > this.railIndex) {
             this.ventilationThroughput = this.rails[this.railIndex].ventilation;

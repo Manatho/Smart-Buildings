@@ -2,148 +2,128 @@
 <html>
 <head>
     <title>Page Title</title>
+    <meta name="viewport" content="height=device-height, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
     <script src="public/modelCO2.js"></script>
     
 </head>
-<body>
+<body style="font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">
     <h1>Live</h1>
-    <h1>Simulation</h1>
-    <div style="background-color: rgb(230, 230, 230); width: 100%; display: flex;">
-        <div style="height: 50%; width: 33%;">
-            <canvas id="tempChart" width="200" height="200"></canvas>
+    <h1>Last Simulation</h1>
+    <div style="background-color: rgb(230, 230, 230); width: 100%; height: 600px;  display: flex;">
+        <div id="data" style="width: 21%; height: 100%;"></div>
+        <div style=" width: 26%;">
+            <canvas id="tempChart" width="1" height="1"></canvas>
         </div>
-        <div style="height: 50%; width: 33%;">
-            <canvas id="co2Chart" width="200" height="200"></canvas>
+        <div style="width: 26%;">
+            <canvas id="co2Chart" width="1" height="1"></canvas>
         </div>
-        <div style="height: 50%; width: 33%;">
-                <canvas id="consumptionChart" width="200" height="200"></canvas>
+        <div style=" width: 26%;">
+                <canvas id="consumptionChart" width="1" height="1"></canvas>
         </div>
 
     </div>
     <script>
-        var data = [
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 },
-        { temperature: 14, people: 3 }];
+        var data = {timestep: 3600, data:[
+        {time: "00", temperature: 14, people: 3 },
+        {time: "01", temperature: 14, people: 3 },
+        {time: "02", temperature: 14, people: 3 },
+        {time: "03", temperature: 14, people: 3 },
+        {time: "04", temperature: 14, people: 3 },
+        {time: "05", temperature: 14, people: 3 },
+        {time: "06", temperature: 14, people: 3 },
+        {time: "07", temperature: 14, people: 3 },
+        {time: "08", temperature: 14, people: 3 },
+        {time: "09", temperature: 14, people: 3 },
+        {time: "10", temperature: 14, people: 3 },
+        {time: "11", temperature: 14, people: 3 },
+        {time: "12", temperature: 14, people: 3 },
+        {time: "13", temperature: 14, people: 3 },
+        {time: "14", temperature: 14, people: 3 },
+        {time: "15", temperature: 14, people: 3 },
+        {time: "16", temperature: 14, people: 3 },
+        {time: "17", temperature: 14, people: 3 },
+        {time: "18", temperature: 14, people: 3 },
+        {time: "19", temperature: 14, people: 3 },
+        {time: "20", temperature: 14, people: 3 },
+        {time: "21", temperature: 14, people: 3 },
+        {time: "22", temperature: 14, people: 3 },
+        {time: "23", temperature: 14, people: 3 }]};
 
+        let startTemp = 16;
+        let roomsize = 50;
+        let startCO2 = 49;
+        let comfortRange = {lower: 19, higher: 23};
+        let emptyRange = {lower: 16, higher: 26};
 
-        let co2Model = new TempPeopleCO2Model(16, 50, 49, {lower: 19, higher: 23}, {lower: 16, higher: 26});
+        let demandRange = { lower: 11, higher: 16 }
+        let demandPower = 0.3;
 
-        var modelSequence = co2Model.predict(3600, data, { lower: 15, higher: 17 }, 0.3);
-        co2Model.rails = modelSequence.stateSequence;
-        //console.log(modelSequence)
-        var hourNumber = 0;
+        let co2Model = new TempPeopleCO2Model(startTemp, roomsize, startCO2, comfortRange, emptyRange);
+        let result = co2Model.predict(data.timestep, data.data, demandRange, demandPower);
+        co2Model.rails = result.stateSequence;
+        console.log(result);
+
+        
+        let hourNumber = 0;
         let showData = [];
-        data.forEach(o => {
+        data.data.forEach(o => {
             let prevConsumption = co2Model.consumption(3600);
             co2Model.update(3600, o.temperature, o.people);
             showData.push({hour: hourNumber++, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature})
         })
 
+        let formattedData = `<h3>Model</h3>
+        <div style="background-color: #efefef; white-space: nowrap; overflow-x: scroll; height: 30%; width:100%;">
+        Temperature: <b>${startTemp}&#176;</b> &nbsp;&nbsp; Room: <b>${roomsize}m&#179;</b> &nbsp&nbsp CO2: <b>${startCO2}kg</b> &nbsp &nbsp<br>
+        Comfort Range: <b>${comfortRange.lower}&#176</b> to <b>${comfortRange.higher}&#176</b> if empty:  <b>${emptyRange.lower}&#176</b> to <b>${emptyRange.higher}&#176</b><br>
+        CO2 Range: <b>${co2Model.CO2Rangekg.lower}kg</b> to <b>${co2Model.CO2Rangekg.higher}kg</b> for a room size <b>${roomsize}m&#179;</b><br><br>
+        DemandResponse: <b>${demandRange.lower}</b> to <b>${demandRange.higher}</b> with <b>${demandPower}</b>kW/h <br>
+        Could fulfill: <b>${result.possible.toString().toUpperCase()}</b>
+        </div> 
+        <h2>Data</h2>
+        <div style="background-color: #efefef; white-space: nowrap; font-size:px; overflow-y: scroll; height: 43%;">
+        `;
+        data.data.forEach(dp => {
+            formattedData += `Time: <b>${dp.time}</b> &nbsp;&nbsp;&nbsp;&nbsp;  Temperature: <b>${dp.temperature}</b> &nbsp;&nbsp;&nbsp;&nbsp; People: <b>${dp.people}</b><br>`
+        })
+        formattedData+= `</div>`
+        document.getElementById("data").innerHTML = formattedData;
 
-        var ctx = document.getElementById('tempChart').getContext('2d');
-        let labels = showData.map(obj => obj.hour);
-        let dataTemp = showData.map(obj => obj.temperature);
-         myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Temperature',
-                    data: dataTemp,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: false
-                        }
-                    }]
-                }
-            }
-        });
+        renderChart('co2Chart', 'co2', 'rgba(255,0,0,0.3)')
+        renderChart('tempChart', 'temperature', 'rgba(0,255,0,0.3)')
+        renderChart('consumptionChart', 'consumption', 'rgba(0,0,255, 0.3)')
 
-        ctx = document.getElementById('co2Chart').getContext('2d');
-         labels = showData.map(obj => obj.hour);
-         dataTemp = showData.map(obj => obj.co2);
-        var myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Co2',
-                    data: dataTemp,
-                    backgroundColor: [
-                        'rgba(132, 99, 255, 0.2)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: false
-                        }
-                    }]
-                }
-            }
-        });
+        function renderChart(canvasId, field, color){
+            let ctx = document.getElementById(canvasId).getContext('2d');
+            let labels = showData.map(obj => obj.hour);
+            let dataTemp = showData.map(obj => obj[field]);
+            let myChart = new Chart(ctx, {
+               type: 'line',
+               data: {
+                   labels: labels,
+                   datasets: [{
+                       label: field,
+                       data: dataTemp,
+                       backgroundColor: [
+                        color
+                       ],
+                       borderWidth: 1
+                   }]
+               },
+               options: {
+                maintainAspectRatio: false,
+                   scales: {
+                       yAxes: [{
+                           ticks: {
+                               beginAtZero: false
+                           }
+                       }]
+                   }
+               }
+            });
+        }
 
-        
-        ctx = document.getElementById('consumptionChart').getContext('2d');
-         labels = showData.map(obj => obj.hour);
-         dataTemp = showData.map(obj => obj.consumption);
-         myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Consumption',
-                    data: dataTemp,
-                    backgroundColor: [
-                        'rgba(0, 0, 0, 0.2)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: false
-                        }
-                    }]
-                }
-            }
-        });
     </script>
 </body>
 </html>
