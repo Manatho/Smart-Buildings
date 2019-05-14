@@ -9,16 +9,16 @@ app.use("/public", express.static(__dirname + "/public"));
 
 // /data?day=1557846833
 app.get("/data", (req, res) => {
-	let day = new Date(req.query.day*1000);
+	let day = new Date(req.query.day * 1000);
 	day.setHours(2);
 	day.setMinutes(0);
 	day.setSeconds(0);
 	day.setMilliseconds(0);
 	day = day.getTime() / 1000;
-	
+
 	let profile = req.query.profile;
 	let people = 0;
-	if(profile == "office"){
+	if (profile == "office") {
 		people = 5;
 	} else {
 		people = 1;
@@ -28,7 +28,7 @@ app.get("/data", (req, res) => {
 	for (let i = 0; i < data.length; i++) {
 		const dp = data[i];
 		if (dp.time < day && dp.time > day - 600) {
-			dataSlice = data.slice(i, i+145);
+			dataSlice = data.slice(i, i + 145);
 			break;
 		}
 	}
@@ -37,7 +37,7 @@ app.get("/data", (req, res) => {
 		response += `[${element.time}]{${element.temperature.toFixed(2)}}(${people})\n`
 	});
 	res.send(response);
-    console.log("---------------");
+	console.log("---------------");
 });
 
 app.post("/predict", (req, res) => {
@@ -48,7 +48,8 @@ app.post("/predict", (req, res) => {
 });
 
 app.post("/currentState", (req, res) => {
-	// Log the state
+	console.log(req.body);
+	res.send("hello");
 });
 
 app.get("/", (req, res) => {
