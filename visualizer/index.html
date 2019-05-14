@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+    <script src="public/modelCO2.js"></script>
+    
+</head>
+<body>
+    <h1>Live</h1>
+    <h1>Simulation</h1>
+    <div style="background-color: rgb(230, 230, 230); width: 100%; display: flex;">
+        <div style="height: 50%; width: 33%;">
+            <canvas id="tempChart" width="200" height="200"></canvas>
+        </div>
+        <div style="height: 50%; width: 33%;">
+            <canvas id="co2Chart" width="200" height="200"></canvas>
+        </div>
+        <div style="height: 50%; width: 33%;">
+                <canvas id="consumptionChart" width="200" height="200"></canvas>
+        </div>
+
+    </div>
+    <script>
+        var data = [
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 },
+        { temperature: 14, people: 3 }];
+
+
+        let co2Model = new TempPeopleCO2Model(16, 50, 49, {lower: 19, higher: 23}, {lower: 16, higher: 26});
+
+        var modelSequence = co2Model.predict(3600, data, { lower: 15, higher: 17 }, 0.3);
+        co2Model.rails = modelSequence.stateSequence;
+        //console.log(modelSequence)
+        var hourNumber = 0;
+        let showData = [];
+        data.forEach(o => {
+            let prevConsumption = co2Model.consumption(3600);
+            co2Model.update(3600, o.temperature, o.people);
+            showData.push({hour: hourNumber++, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature})
+        })
+
+
+        var ctx = document.getElementById('tempChart').getContext('2d');
+        let labels = showData.map(obj => obj.hour);
+        let dataTemp = showData.map(obj => obj.temperature);
+         myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature',
+                    data: dataTemp,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false
+                        }
+                    }]
+                }
+            }
+        });
+
+        ctx = document.getElementById('co2Chart').getContext('2d');
+         labels = showData.map(obj => obj.hour);
+         dataTemp = showData.map(obj => obj.co2);
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Co2',
+                    data: dataTemp,
+                    backgroundColor: [
+                        'rgba(132, 99, 255, 0.2)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false
+                        }
+                    }]
+                }
+            }
+        });
+
+        
+        ctx = document.getElementById('consumptionChart').getContext('2d');
+         labels = showData.map(obj => obj.hour);
+         dataTemp = showData.map(obj => obj.consumption);
+         myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Consumption',
+                    data: dataTemp,
+                    backgroundColor: [
+                        'rgba(0, 0, 0, 0.2)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false
+                        }
+                    }]
+                }
+            }
+        });
+    </script>
+</body>
+</html>
