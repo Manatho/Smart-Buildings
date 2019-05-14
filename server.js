@@ -47,9 +47,9 @@ app.post("/predict", (req, res) => {
 	//... EVERYHTING
 });
 
-app.post("/currentState", (req, res) => {
-	console.log(req.body);
-	res.send("hello");
+app.post("/currentState/:id", (req, res) => {
+	console.log(req.params.id);
+	res.send(req.params);
 });
 
 app.get("/", (req, res) => {
