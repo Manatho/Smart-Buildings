@@ -56,7 +56,7 @@
         let comfortRange = {lower: 19, higher: 23};
         let emptyRange = {lower: 16, higher: 26};
 
-        let demandRange = { lower: 11, higher: 16 }
+        let demandRange = { lower: 12, higher: 16 }
         let demandPower = 0.3;
 
         let co2Model = new TempPeopleCO2Model(startTemp, roomsize, startCO2, comfortRange, emptyRange);
@@ -68,9 +68,9 @@
         let hourNumber = 0;
         let showData = [];
         data.data.forEach(o => {
-            let prevConsumption = co2Model.consumption(3600);
-            co2Model.update(3600, o.temperature, o.people);
-            showData.push({hour: hourNumber++, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature})
+            let prevConsumption = co2Model.consumption(data.timestep);
+            co2Model.update(data.timestep, o.temperature, o.people);
+            showData.push({hour: o.time, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature})
         })
 
         let formattedData = `<h3>Model</h3>
