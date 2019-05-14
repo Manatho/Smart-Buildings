@@ -48,6 +48,7 @@ app.post("/predict", (req, res) => {
 });
 
 app.post("/currentState/:id", (req, res) => {
+	res.set({ "content-type": "text/plain" })
 	console.log(req.params.id);
 	res.send(req.params);
 });
