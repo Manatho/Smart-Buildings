@@ -1,7 +1,8 @@
 var tempChart;
 var co2Chart;
 var peopleChart;
-
+var consumptionChart;
+var charts = [];
 
 setInterval(updateCharts, 5000);
 
@@ -9,9 +10,14 @@ function createCharts() {
     tempChart = newChart('liveTempChart', 'Degrees Celcius')
     co2Chart = newChart('liveCo2Chart', 'kg')
     peopleChart = newChart('livePeopleChart', 'number of people')
+    consumptionChart = newChart('liveConsumptionChart', 'kw')
+    charts.push({ chart: tempChart, options: { color: 'rgba(0, 255, 0, 0.3)', name: 'temperature' } },
+        { chart: co2Chart, options: { color: 'rgba(255,0,0,0.3)', name: 'co2' } },
+        { chart: peopleChart, options: { color: 'rgba(255, 255, 0, 0.3)', name: 'people' } },
+        { chart: consumptionChart, options: { color: 'rgba(0,0,255, 0.3)', name: 'consumption' } });
 }
 
-function newChart(id, field) {
+function newChart(id, yLabelName) {
     let ctx = document.getElementById(id).getContext('2d');
     return new Chart(ctx, {
         type: 'line',
@@ -25,7 +31,7 @@ function newChart(id, field) {
                 yAxes: [{
                     scaleLabel: {
                         display: true,
-                        labelString: field
+                        labelString: yLabelName
                     },
 
                     ticks: {
@@ -44,50 +50,30 @@ function newChart(id, field) {
     })
 }
 
-// {
-//     lineTension: 0,
-//         label: 'temperature',
-//             backgroundColor: [
-//                 'rgba(0, 255, 0, 0.3)'
-//             ],
-//                 borderWidth: 1
-// }
-
 createCharts();
 
+var previousLastObject;
 function updateCharts() {
     fetch("./public/livedata.json")
         .then(response => response.json())
         .then(function (json) {
-            if (json.length == tempChart.data.labels.length) {
-                return;
-            } else {
-                removeData(tempChart)
-                let tempData = json.map(obj => obj.temperature)
-                let labels = json.map(obj => obj.time)
-                addData(tempChart, labels, tempData, 'rgba(0, 255, 0, 0.3)', 'temperature');
-            }
+            if (JSON.stringify(previousLastObject) != JSON.stringify(json[json.length - 1])) {
+                // generate xAxisNames
+                var labels = json.map(obj => {
+                    let time = new Date(obj.time * 1000);
+                    time.setHours(time.getHours() - 1);
+                    return ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2);
+                });
 
-            if (json.length == co2Chart.data.labels.length) {
-                return;
-            } else {
-                removeData(co2Chart)
-                let co2Data = json.map(obj => obj.co2)
-                let labels = json.map(obj => obj.time)
-                addData(co2Chart, labels, co2Data, 'rgba(255,0,0,0.3)', 'co2');
-            }
+                charts.forEach(object => {
+                    removeData(object.chart);
+                    let data = json.map(datapoint => datapoint[object.options.name]);
+                    addData(object.chart, labels, data, object.options.color, object.options.name);
 
-            if (json.length == peopleChart.data.labels.length) {
-                return;
-            } else {
-                removeData(peopleChart)
-                let peopleData = json.map(obj => obj.people)
-                let labels = json.map(obj => obj.time)
-                addData(peopleChart, labels, peopleData, 'rgba(255, 255, 0, 0.3)', 'people');
+                })
             }
+            previousLastObject = json[json.length - 1]
         });
-    //let tempData = data.map(obj => obj.temperature)
-    //tempChart.data.datasets = tempData;
 
 }
 

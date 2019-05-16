@@ -5,6 +5,7 @@ const fs = require('fs')
 
 const port = process.env.PORT;
 const data = require("./public/weatherdata.json");
+const liveDataLength = 50;
 
 //On server start it will update last predicted
 fs.copyFileSync("./DummyData/lastPredict.json", "./public/predicted.json");
@@ -129,6 +130,8 @@ app.post("/currentState", (req, res) => {
 	let co2 = req.query.co2;
 	// people
 	let people = req.query.people;
+	// consumption
+	let consumption = req.query.consumption;
 
 	fs.readFile('./public/livedata.json', 'utf-8', function (err, data) {
 		if (err) throw err
@@ -138,18 +141,21 @@ app.post("/currentState", (req, res) => {
 			time: time,
 			temperature: temperature,
 			co2: co2,
-			people: people
+			people: people,
+			consumption: consumption
 		})
-		console.log(arrayOfObjects)
+		if (arrayOfObjects.length > liveDataLength) {
+			arrayOfObjects.splice(0, 1);
+		}
+
 
 		fs.writeFile('./public/livedata.json', JSON.stringify(arrayOfObjects), 'utf-8', function (err) {
-			if (err) throw err
-			console.log('Done!');
-		})
-	})
+			if (err) throw err;
+		});
+	});
 
-	console.log(`time:${time}\ntemperature:${temperature}\nco2:${co2}\npeople:${people}`);
-	res.status(200);
+	//console.log(`time:${time}\ntemperature:${temperature}\nco2:${co2}\npeople:${people}`);
+	res.status(200).end();
 })
 
 function validQuery(query) {
@@ -157,7 +163,7 @@ function validQuery(query) {
 	let failed = [];
 
 	required.forEach(key => {
-		if(!query.hasOwnProperty(key)){
+		if (!query.hasOwnProperty(key)) {
 			failed.push(key);
 		}
 	});
