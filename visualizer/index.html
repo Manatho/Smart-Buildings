@@ -1,14 +1,28 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Page Title</title>
     <meta name="viewport" content="height=device-height, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
     <script src="public/modelCO2.js"></script>
-    
+    <script type="text/javascript" src="../public/livedata.json"></script>
+
 </head>
+
 <body style="font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">
-    <h1>Live</h1>
+    <h1 id="top">Live</h1>
+    <div style="background-color: rgb(230, 230, 230); width: 100%; height: 600px;  display: flex;">
+        <div style=" width: 33%;">
+            <canvas id="liveTempChart" width="1" height="1"></canvas>
+        </div>
+        <div style="width: 33%;">
+            <canvas id="liveCo2Chart" width="1" height="1"></canvas>
+        </div>
+        <div style=" width: 33%;">
+            <canvas id="livePeopleChart" width="1" height="1"></canvas>
+        </div>
+    </div>
     <h1>Last Simulation</h1>
     <div style="background-color: rgb(230, 230, 230); width: 100%; height: 600px;  display: flex;">
         <div id="data" style="width: 21%; height: 100%;"></div>
@@ -19,42 +33,46 @@
             <canvas id="co2Chart" width="1" height="1"></canvas>
         </div>
         <div style=" width: 26%;">
-                <canvas id="consumptionChart" width="1" height="1"></canvas>
+            <canvas id="consumptionChart" width="1" height="1"></canvas>
         </div>
 
     </div>
     <script>
-        var data = {timestep: 3600, data:[
-        {time: "00", temperature: 14, people: 3 },
-        {time: "01", temperature: 14, people: 3 },
-        {time: "02", temperature: 14, people: 3 },
-        {time: "03", temperature: 14, people: 3 },
-        {time: "04", temperature: 14, people: 3 },
-        {time: "05", temperature: 14, people: 3 },
-        {time: "06", temperature: 14, people: 3 },
-        {time: "07", temperature: 14, people: 3 },
-        {time: "08", temperature: 14, people: 3 },
-        {time: "09", temperature: 14, people: 3 },
-        {time: "10", temperature: 14, people: 3 },
-        {time: "11", temperature: 14, people: 3 },
-        {time: "12", temperature: 14, people: 3 },
-        {time: "13", temperature: 14, people: 3 },
-        {time: "14", temperature: 14, people: 3 },
-        {time: "15", temperature: 14, people: 3 },
-        {time: "16", temperature: 14, people: 3 },
-        {time: "17", temperature: 14, people: 3 },
-        {time: "18", temperature: 14, people: 3 },
-        {time: "19", temperature: 14, people: 3 },
-        {time: "20", temperature: 14, people: 3 },
-        {time: "21", temperature: 14, people: 3 },
-        {time: "22", temperature: 14, people: 3 },
-        {time: "23", temperature: 14, people: 3 }]};
+        //LIVE DATA SECTION
+
+        var data = {
+            timestep: 3600, data: [
+                { time: "00", temperature: 14, people: 3 },
+                { time: "01", temperature: 14, people: 3 },
+                { time: "02", temperature: 14, people: 3 },
+                { time: "03", temperature: 14, people: 3 },
+                { time: "04", temperature: 14, people: 3 },
+                { time: "05", temperature: 14, people: 3 },
+                { time: "06", temperature: 14, people: 3 },
+                { time: "07", temperature: 14, people: 3 },
+                { time: "08", temperature: 14, people: 3 },
+                { time: "09", temperature: 14, people: 3 },
+                { time: "10", temperature: 14, people: 3 },
+                { time: "11", temperature: 14, people: 3 },
+                { time: "12", temperature: 14, people: 3 },
+                { time: "13", temperature: 14, people: 3 },
+                { time: "14", temperature: 14, people: 3 },
+                { time: "15", temperature: 14, people: 3 },
+                { time: "16", temperature: 14, people: 3 },
+                { time: "17", temperature: 14, people: 3 },
+                { time: "18", temperature: 14, people: 3 },
+                { time: "19", temperature: 14, people: 3 },
+                { time: "20", temperature: 14, people: 3 },
+                { time: "21", temperature: 14, people: 3 },
+                { time: "22", temperature: 14, people: 3 },
+                { time: "23", temperature: 14, people: 3 }]
+        };
 
         let startTemp = 16;
         let roomsize = 50;
         let startCO2 = 49;
-        let comfortRange = {lower: 19, higher: 23};
-        let emptyRange = {lower: 16, higher: 26};
+        let comfortRange = { lower: 19, higher: 23 };
+        let emptyRange = { lower: 16, higher: 26 };
 
         let demandRange = { lower: 12, higher: 16 }
         let demandPower = 0.3;
@@ -64,13 +82,13 @@
         co2Model.rails = result.stateSequence;
         console.log(result);
 
-        
+
         let hourNumber = 0;
         let showData = [];
         data.data.forEach(o => {
             let prevConsumption = co2Model.consumption(data.timestep);
             co2Model.update(data.timestep, o.temperature, o.people);
-            showData.push({hour: o.time, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature})
+            showData.push({ hour: o.time, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature })
         })
 
         let formattedData = `<h3>Model</h3>
@@ -87,33 +105,33 @@
         data.data.forEach(dp => {
             formattedData += `Time: <b>${dp.time}</b> &nbsp;&nbsp;&nbsp;&nbsp;  Temperature: <b>${dp.temperature}</b> &nbsp;&nbsp;&nbsp;&nbsp; People: <b>${dp.people}</b><br>`
         })
-        formattedData+= `</div>`
+        formattedData += `</div>`
         document.getElementById("data").innerHTML = formattedData;
 
-        renderChart('co2Chart', 'co2', 'rgba(255,0,0,0.3)')
-        renderChart('tempChart', 'temperature', 'rgba(0,255,0,0.3)')
-        renderChart('consumptionChart', 'consumption', 'rgba(0,0,255, 0.3)')
+        renderChart('co2Chart', 'co2', 'rgba(255,0,0,0.3)', showData)
+        renderChart('tempChart', 'temperature', 'rgba(0,255,0,0.3)', showData)
+        renderChart('consumptionChart', 'consumption', 'rgba(0,0,255, 0.3)', showData)
 
-        function renderChart(canvasId, field, color){
+        function renderChart(canvasId, field, color, data) {
             let ctx = document.getElementById(canvasId).getContext('2d');
-            let labels = showData.map(obj => obj.hour);
-            let dataTemp = showData.map(obj => obj[field]);
+            let labels = data.map(obj => obj.hour);
+            let dataTemp = data.map(obj => obj[field]);
             let myChart = new Chart(ctx, {
-               type: 'line',
-               data: {
-                   labels: labels,
-                   datasets: [{
-                       lineTension: 0,
-                       label: field,
-                       data: dataTemp,
-                       backgroundColor: [
-                        color
-                       ],
-                       borderWidth: 1
-                   }]
-               },
-               options: {
-                maintainAspectRatio: false,
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        lineTension: 0,
+                        label: field,
+                        data: dataTemp,
+                        backgroundColor: [
+                            color
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
                     scales: {
                         yAxes: [{
                             scaleLabel: {
@@ -122,7 +140,7 @@
                             },
 
                             ticks: {
-                               beginAtZero: true
+                                beginAtZero: true
                             }
                         }],
                         xAxes: [{
@@ -132,21 +150,23 @@
                             },
                         }]
                     }
-               }
+                }
             });
         }
 
-        function unitPicker(name){
+        function unitPicker(name) {
             switch (name) {
                 case "co2":
                     return "kg";
                 case "consumption":
                     return "kW"
-                case "temperature": 
+                case "temperature":
                     return "Degrees Celsius"
             }
         }
 
     </script>
+    <script src="public/livedata.js"></script>
 </body>
+
 </html>

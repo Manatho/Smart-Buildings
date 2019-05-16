@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const path = require("path");
+const fs = require('fs')
 
 const port = process.env.PORT;
 const data = require("./public/weatherdata.json");
@@ -47,10 +48,43 @@ app.post("/predict", (req, res) => {
 	//... EVERYHTING
 });
 
-app.post("/currentState/:id", (req, res) => {
+app.post("/currentState", (req, res) => {
 	res.set({ "content-type": "text/plain" })
-	console.log(req.params.id);
-	res.send(req.params);
+	// time
+	let year = req.query.year;
+	let month = req.query.month;
+	let date = req.query.date;
+	let hour = req.query.hour;
+	let minute = req.query.minute;
+	let sec = req.query.second;
+	let time = Math.floor(new Date(year, month, date, hour, minute, sec).getTime() / 1000.0);
+	// temp
+	let temperature = req.query.temperature;
+	// co2
+	let co2 = req.query.co2;
+	// people
+	let people = req.query.people;
+
+	fs.readFile('./public/livedata.json', 'utf-8', function (err, data) {
+		if (err) throw err
+
+		let arrayOfObjects = JSON.parse(data)
+		arrayOfObjects.push({
+			time: time,
+			temperature: temperature,
+			co2: co2,
+			people: people
+		})
+		console.log(arrayOfObjects)
+
+		fs.writeFile('./public/livedata.json', JSON.stringify(arrayOfObjects), 'utf-8', function (err) {
+			if (err) throw err
+			console.log('Done!');
+		})
+	})
+
+	console.log(`time:${time}\ntemperature:${temperature}\nco2:${co2}\npeople:${people}`);
+	res.status(200);
 });
 
 app.get("/", (req, res) => {
