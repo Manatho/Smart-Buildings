@@ -78,8 +78,10 @@ app.post("/predict", (req, res) => {
 	//... EVERYHTING
 });
 
-app.post("/currentState", (req, res) => {
-	// Log the state
+app.post("/currentState/:id", (req, res) => {
+	res.set({ "content-type": "text/plain" })
+	console.log(req.params.id);
+	res.send(req.params);
 });
 
 app.get("/", (req, res) => {
