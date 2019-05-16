@@ -106,9 +106,12 @@ app.get("/predict", (req, res) => {
 	predict.emptyRange = parseRange(req.query.emptyRange);
 	predict.demandRange = parseRange(req.query.demandRange);
 	predict.demandPower = Number.parseInt(req.query.demandPower);
+	predict.creationTime = Date.now();
 
 	fs.writeFile("./public/predicted.json", JSON.stringify(predict), err => {
-		console.log(err);
+		if(err){
+			console.log("Write to predicted" + err);
+		}
 	});
 
 	res.send(predict);
