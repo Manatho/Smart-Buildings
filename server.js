@@ -100,7 +100,12 @@ app.get("/predict", (req, res) => {
 	});
 
 	predict.startTemp = Number.parseInt(req.query.temperature);
-	predict.roomsize = Number.parseInt(req.query.roomsize);
+	predict.roomDimensions = 
+		{
+			width: Number.parseInt(req.query.roomwidth), 
+			height: Number.parseInt(req.query.roomheight),
+			length: Number.parseInt(req.query.roomlength)
+		}
 	predict.startCO2 = Number.parseInt(req.query.co2);
 	predict.comfortRange = parseRange(req.query.comfortRange);
 	predict.emptyRange = parseRange(req.query.emptyRange);
@@ -162,7 +167,7 @@ app.post("/currentState", (req, res) => {
 })
 
 function validQuery(query) {
-	let required = ["temperature", "roomsize", "co2", "comfortRange", "emptyRange", "demandRange", "demandPower", "data", "timestep"];
+	let required = ["temperature", "roomlength", "roomwidth", "roomheight", "co2", "comfortRange", "emptyRange", "demandRange", "demandPower", "data", "timestep"];
 	let failed = [];
 
 	required.forEach(key => {

@@ -1,22 +1,13 @@
-const WallLength = 5,
-	WallWidth = 4,
-	WallHeight = 2.5;
-const AreaWall = WallLength * WallWidth * 2 + WallLength * WallHeight * 2 + WallWidth * WallHeight * 2;
-const VolumeRoom = WallHeight * WallWidth * WallLength;
-const AreaFloor = WallLength * WallWidth;
 
 const HeatResistanceWall = 1 / 0.37;
 
 const DensityAir = 1.2;
-const MassAir = VolumeRoom * DensityAir;
 const HeatCapacityAir = 717.5;
 
 const DensityWall = 1800;
 const WallThickness = 0.12;
-const MassWall = AreaWall * WallThickness * DensityWall;
 const HeatCapacityWall = 840;
 
-const EquipmentHeatGain = 6.88 * AreaFloor; //W
 const HumanHeatGain = 100; //W
 
 const HeatPumpCapacity = 3500; //W
@@ -42,12 +33,18 @@ class AdvancedModel {
 		this.currentTemperature = startTemp;
 		this.previousTemperature = startTemp;
 		this.numberOfPeople = 0;
+		
+		this.wallLength = roomsize.length;
+        this.wallWidth = roomsize.width;
+        this.wallHeight = roomsize.height;
+        this.roomSurfaces = this.wallLength * this.wallWidth * 2 + this.wallLength * this.wallHeight * 2 + this.wallWidth * this.wallHeight * 2;
+        this.roomVolume = this.wallHeight * this.wallWidth * this.wallLength;
+        this.roomFloor = this.wallLength * this.wallWidth;
 
 		this.previousCO2 = startCO2;
 		this.currentCO2 = startCO2;
-		this.roomsize = roomsize;
 
-		this.CO2Rangekg = { lower: (CO2Range.lower / 1000) * roomsize, higher: (CO2Range.higher / 1000) * roomsize };
+		this.CO2Rangekg = { lower: (CO2Range.lower / 1000) * this.roomVolume, higher: (CO2Range.higher / 1000) * this.roomVolume };
 		this.currentConsumption;
 
 		this.heatPumpState = 0;
@@ -59,17 +56,23 @@ class AdvancedModel {
 		this.ventilationThroughput = 0;
 
 		this.powerSavingMode = false;
+		
+
+
+        this.roomAirMass = this.roomVolume * DensityAir;
+        this.roomWallMass = this.roomSurfaces * WallThickness * DensityWall;
+        this.roomEquipmentHeatGain = 6.88 * this.roomFloor;
 	}
 
 	// Delta???
 	ambientWallHeatLoss(delta, currentTemp, outsideTemp) {
-		return ((AreaWall * (currentTemp - outsideTemp)) / HeatResistanceWall) * delta;
+		return ((this.roomSurfaces * (currentTemp - outsideTemp)) / HeatResistanceWall) * delta;
 	}
 
 	// Delta???
 	roomHeatGain(delta, numberOfPeople) {
 		if (numberOfPeople > 0) {
-			return (EquipmentHeatGain + HumanHeatGain * numberOfPeople) * delta;
+			return (this.roomEquipmentHeatGain + HumanHeatGain * numberOfPeople) * delta;
 		} else {
 			return 0;
 		}
@@ -158,7 +161,7 @@ class AdvancedModel {
 			return 0;
 		}
 		let airMoved = (this.ventilationThroughput / hour * delta);
-		let removedCO2Weight = (this.currentCO2 / this.roomsize) * airMoved;
+		let removedCO2Weight = (this.currentCO2 / this.roomVolume) * airMoved;
 		let newAirCO2 = outsideCO2Concentration * airMoved;
 
 		return -removedCO2Weight + newAirCO2;
@@ -194,11 +197,11 @@ class AdvancedModel {
 		this.currentTemperature =
 			this.previousTemperature -
 			(this.ambientWallHeatLoss(delta, this.previousTemperature, outsideTemp) - this.roomHeatGain(delta, numberOfPeople)) /
-			(MassAir * HeatCapacityAir + MassWall * HeatCapacityWall);
+			(this.roomAirMass * HeatCapacityAir + this.roomWallMass * HeatCapacityWall);
 
 		//console.log(this.currentTemperature);
 
-		let tempChange = ((1 / (((((MassAir * HeatCapacityAir + MassWall * HeatCapacityWall) / 600) / HeatPumpCapacity) * 10) / 60)) / hour) * delta
+		let tempChange = ((1 / (((((this.roomAirMass * HeatCapacityAir + this.roomWallMass * HeatCapacityWall) / 600) / HeatPumpCapacity) * 10) / 60)) / hour) * delta
 		this.heatPumpUpdate(this.currentTemperature, tempChange);
 
 		this.currentTemperature = this.currentTemperature + this.heatPumpState * tempChange;
@@ -273,7 +276,7 @@ class AdvancedModel {
 
 	copy() {
 		let o = JSON.parse(JSON.stringify(this));
-		let newModel = new AdvancedModel(o.currentTemperature, o.roomsize, o.currentCO2, o.tempRangePeople, o.tempRangeNoPeople);
+		let newModel = new AdvancedModel(o.currentTemperature, {length: o.wallLength, width: o.wallWidth, height: o.wallHeight}, o.currentCO2, o.tempRangePeople, o.tempRangeNoPeople);
 		newModel.numberOfPeople = o.numberOfPeople;
 		newModel.heatPumpState = o.heatPumpState;
 		newModel.rails = o.rails;

@@ -16,7 +16,8 @@ function updatePrediction() {
 
 function render(predict) {
     //TempPeopleCO2Model
-    let co2Model = new AdvancedModel(predict.startTemp, predict.roomsize, predict.startCO2, predict.comfortRange, predict.emptyRange);
+    
+    let co2Model = new AdvancedModel(predict.startTemp, predict.roomDimensions, predict.startCO2, predict.comfortRange, predict.emptyRange);
     let result = co2Model.predict(predict.timestep, predict.data, predict.demandRange, predict.demandPower);
     co2Model.rails = result.stateSequence;
     //console.log(result);
@@ -29,12 +30,13 @@ function render(predict) {
         let prevConsumption = co2Model.currentConsumption;
         showData.push({ time: o.time, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature })
     })
+    
 
     let formattedData = `<h3>Model</h3>
     <div style="background-color: #efefef; white-space: nowrap; overflow-x: scroll; height: 30%; width:100%;">
-    Temperature: <b>${predict.startTemp}&#176;</b> &nbsp;&nbsp; Room: <b>${predict.roomsize}m&#179;</b> &nbsp&nbsp CO2: <b>${predict.startCO2}kg</b> &nbsp &nbsp<br>
+    Temperature: <b>${predict.startTemp}&#176;</b> &nbsp;&nbsp; Room: <b>${co2Model.roomVolume}m&#179;</b> &nbsp&nbsp CO2: <b>${predict.startCO2}kg</b> &nbsp &nbsp<br>
     Comfort Range: <b>${predict.comfortRange.lower}&#176</b> to <b>${predict.comfortRange.higher}&#176</b> if empty:  <b>${predict.emptyRange.lower}&#176</b> to <b>${predict.emptyRange.higher}&#176</b><br>
-    CO2 Range: <b>${co2Model.CO2Rangekg.lower}kg</b> to <b>${co2Model.CO2Rangekg.higher}kg</b> for a room size <b>${predict.roomsize}m&#179;</b><br><br>
+    CO2 Range: <b>${co2Model.CO2Rangekg.lower}kg</b> to <b>${co2Model.CO2Rangekg.higher}kg</b> for a room size <b>${co2Model.roomVolume}m&#179;</b><br><br>
     DemandResponse: <b>${predict.demandRange.lower}</b> to <b>${predict.demandRange.higher}</b> with <b>${predict.demandPower}</b>kW/h <br>
     Could fulfill: <b>${result.possible.toString().toUpperCase()}</b>
     </div> 

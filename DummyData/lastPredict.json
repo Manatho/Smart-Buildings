@@ -1,6 +1,10 @@
 {
     "startTemp": 16,
-    "roomsize": 50,
+    "roomDimensions": {
+        "width": 5,
+        "height": 4,
+        "length": 2.5
+    },
     "startCO2": 49,
     "comfortRange": {
         "lower": 19,
