@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const fs = require('fs')
+const AdvancedModel = require('./public/scripts/modelCO2Advanced').AdvancedModel;
 
 const port = process.env.PORT;
 const data = require("./public/weatherdata.json");
@@ -119,7 +120,17 @@ app.get("/predict", (req, res) => {
 		}
 	});
 
-	res.send(predict);
+	let co2Model = new AdvancedModel(predict.startTemp, predict.roomDimensions, predict.startCO2, predict.comfortRange, predict.emptyRange);
+    let result = co2Model.predict(predict.timestep, predict.data, predict.demandRange, predict.demandPower);
+
+	let response = `[${result.possible}]\n`;
+
+	result.stateSequence.forEach(state => {
+		response += `(${state.heatpump}:${state.ventilation})\n`
+	});
+
+
+	res.send(response);
 });
 
 app.post("/currentState", (req, res) => {

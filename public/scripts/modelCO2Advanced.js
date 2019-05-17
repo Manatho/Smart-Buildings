@@ -33,7 +33,7 @@ class AdvancedModel {
 		this.currentTemperature = startTemp;
 		this.previousTemperature = startTemp;
 		this.numberOfPeople = 0;
-		
+
 		this.wallLength = roomsize.length;
         this.wallWidth = roomsize.width;
         this.wallHeight = roomsize.height;
@@ -367,3 +367,6 @@ data.forEach(o => {
 });*/
 
 
+module.exports = {
+	AdvancedModel: AdvancedModel
+}
