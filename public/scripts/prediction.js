@@ -15,8 +15,8 @@ function updatePrediction(){
 }
 
 function render(predict){
-    
-    let co2Model = new TempPeopleCO2Model(predict.startTemp, predict.roomsize, predict.startCO2, predict.comfortRange, predict.emptyRange);
+    //TempPeopleCO2Model
+    let co2Model = new AdvancedModel(predict.startTemp, predict.roomsize, predict.startCO2, predict.comfortRange, predict.emptyRange);
     let result = co2Model.predict(predict.timestep, predict.data, predict.demandRange, predict.demandPower);
     co2Model.rails = result.stateSequence;
     console.log(result);
@@ -25,8 +25,8 @@ function render(predict){
     let hourNumber = 0;
     let showData = [];
     predict.data.forEach(o => {
-        let prevConsumption = co2Model.consumption(predict.timestep);
         co2Model.update(predict.timestep, o.temperature, o.people);
+        let prevConsumption = co2Model.currentConsumption;
         showData.push({time: o.time, consumption: prevConsumption, co2: co2Model.currentCO2, temperature: co2Model.currentTemperature})
     })
 
