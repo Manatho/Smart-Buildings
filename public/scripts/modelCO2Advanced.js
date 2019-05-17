@@ -23,15 +23,17 @@ const HeatPumpCapacity = 3500; //W
 
 const hour = 3600;
 const VentilationConsumption = 0.205 / hour;
+const VentilationMaxThroughput = 5;
 const HeatpumpConsumption = 2.6 / hour;
 
 const COPCarnotHeatPump = 4;
 
-const CO2Human= 0.0375 / hour; //kg
+const CO2Human = 0.0375 / hour; //kg
 const passiveCO2Leak = 0.01 / hour;
-const CO2Range = {lower: 350, higher: 1000} //PPM
+const CO2Range = { lower: 350, higher: 1000 } //PPM
 
 const outsideCO2Concentration = 0.405 //kg
+
 
 class AdvancedModel {
 	constructor(startTemp, roomsize, startCO2, tempPeopleRange, tempNoPeopleRange) {
@@ -42,12 +44,12 @@ class AdvancedModel {
 		this.numberOfPeople = 0;
 
 		this.previousCO2 = startCO2;
-        this.currentCO2 = startCO2;
+		this.currentCO2 = startCO2;
 		this.roomsize = roomsize;
-        
+
 		this.CO2Rangekg = { lower: (CO2Range.lower / 1000) * roomsize, higher: (CO2Range.higher / 1000) * roomsize };
-        this.currentConsumption;
-        
+		this.currentConsumption;
+
 		this.heatPumpState = 0;
 		this.rails = [];
 		this.railIndex = 0;
@@ -55,6 +57,8 @@ class AdvancedModel {
 		this.averageOffSwitchOverride = false;
 
 		this.ventilationThroughput = 0;
+
+		this.powerSavingMode = false;
 	}
 
 	// Delta???
@@ -71,13 +75,13 @@ class AdvancedModel {
 		}
 	}
 
-	heatPumpUpdate(currentTemperature) {
+	heatPumpUpdate(currentTemperature, tempChange) {
 		if (this.rails.length > this.railIndex) {
-		    let proposedState =  this.rails[this.railIndex].heatpump;
-		    if(!Number.isNaN(proposedState)){
-		        this.heatPumpState = proposedState
-		        return;
-		    }
+			let proposedState = this.rails[this.railIndex].heatpump;
+			if (!Number.isNaN(proposedState)) {
+				this.heatPumpState = proposedState
+				return;
+			}
 		}
 		if (this.numberOfPeople > 0) {
 			if (currentTemperature < this.tempRangePeople.lower) {
@@ -85,7 +89,16 @@ class AdvancedModel {
 			} else if (currentTemperature > this.tempRangePeople.higher) {
 				this.heatPumpState = -1;
 			} else {
-				this.heatPumpState = 0;
+				if (!this.powerSavingMode) {
+					let perfectTemp = (this.tempRangePeople.higher + this.tempRangePeople.lower) / 2
+					if (currentTemperature > (this.tempRangePeople.higher + this.tempRangePeople.lower) / 2) {
+						this.heatPumpState = -((currentTemperature - perfectTemp) / (this.tempRangePeople.higher - perfectTemp));
+					} else {
+						this.heatPumpState = (currentTemperature - perfectTemp) / (this.tempRangePeople.lower - perfectTemp);
+					}
+				} else {
+					this.heatPumpState = 0;
+				}
 			}
 		} else {
 			if (currentTemperature < this.tempRangeNoPeople.lower) {
@@ -93,49 +106,77 @@ class AdvancedModel {
 			} else if (currentTemperature > this.tempRangeNoPeople.higher) {
 				this.heatPumpState = -1;
 			} else {
+				if (!this.powerSavingMode) {
+					let perfectTemp = (this.tempRangeNoPeople.higher + this.tempRangeNoPeople.lower) / 2
+					if (currentTemperature > (this.tempRangeNoPeople.higher + this.tempRangeNoPeople.lower) / 2) {
+						this.heatPumpState = -((currentTemperature - perfectTemp) / (this.tempRangeNoPeople.higher - perfectTemp));
+					} else {
+						this.heatPumpState = (currentTemperature - perfectTemp) / (this.tempRangeNoPeople.lower - perfectTemp);
+					}
+				} else {
+					this.heatPumpState = 0;
+					console.log("heatPumpstate = 0")
+				}
+			}
+		}
+		let nextTemp = currentTemperature + this.heatPumpState * tempChange;
+		let overheating = nextTemp > this.tempRangePeople.higher && this.heatPumpState > 0
+		let overcooling = nextTemp < this.tempRangePeople.lower && this.heatPumpState < 0
+		let overheatingNoPeople = nextTemp > this.tempRangeNoPeople.higher && this.heatPumpState > 0
+		let overcoolingNoPeople = nextTemp < this.tempRangeNoPeople.lower && this.heatPumpState < 0
+		if (this.numberOfPeople > 0) {
+			if (overheating || overcooling) {
+				this.heatPumpState = 0;
+			}
+		} else {
+			if (overheatingNoPeople || overcoolingNoPeople) {
 				this.heatPumpState = 0;
 			}
 		}
-    }
-    
-    ventilationUpdate(){
-        if (this.rails.length > this.railIndex) {
-            this.ventilationThroughput = this.rails[this.railIndex].ventilation;
-            return;
-        }
+	}
 
-        if(this.currentCO2 > this.CO2Rangekg.higher) {
-            this.ventilationThroughput = 1;
-        } else// if(this.currentCO2 < (this.CO2Rangekg.higher + this.CO2Rangekg.lower) / 2 || this.averageOffSwitchOverride)
-        {
-            this.ventilationThroughput = 0;
-        }
-    }
+	ventilationUpdate() {
+		if (this.rails.length > this.railIndex) {
+			this.ventilationThroughput = this.rails[this.railIndex].ventilation;
+			return;
+		}
 
-    ventilationSupply(delta){
-        if(this.ventilationThroughput == 0){
-            return 0;
-        }
-        let airMoved = (this.ventilationThroughput/hour * delta);
-        let removedCO2Weight = (this.currentCO2 / this.roomsize) * airMoved;
-        let newAirCO2 = outsideCO2Concentration * airMoved;
+		if (this.currentCO2 > this.CO2Rangekg.higher) {
+			this.ventilationThroughput = VentilationMaxThroughput;
+		} else {
+			let perfectCo2 = (this.CO2Rangekg.higher + this.CO2Rangekg.lower) / 2
+			if (this.currentCO2 > perfectCo2 && !this.powerSavingMode) {
+				this.ventilationThroughput = VentilationMaxThroughput * (this.currentCO2 - perfectCo2) / (this.CO2Rangekg.higher - perfectCo2);
+			} else {
+				this.ventilationThroughput = 0;
+			}
+		}
+	}
 
-        return -removedCO2Weight + newAirCO2;
+	ventilationSupply(delta) {
+		if (this.ventilationThroughput == 0) {
+			return 0;
+		}
+		let airMoved = (this.ventilationThroughput / hour * delta);
+		let removedCO2Weight = (this.currentCO2 / this.roomsize) * airMoved;
+		let newAirCO2 = outsideCO2Concentration * airMoved;
 
-    }
+		return -removedCO2Weight + newAirCO2;
 
-    ambientCo2Loss(delta){
-        return passiveCO2Leak * delta;
-    }
+	}
 
-    
-    co2Gain(delta){
-        return (CO2Human * delta) * this.numberOfPeople;
-    }
+	ambientCo2Loss(delta) {
+		return passiveCO2Leak * delta;
+	}
+
+
+	co2Gain(delta) {
+		return (CO2Human * delta) * this.numberOfPeople;
+	}
 
 	consumption(delta) {
-        let heatPumpOutput = Math.abs(this.heatPumpState) * HeatPumpCapacity;
-        let heatPumpInput = heatPumpOutput / COPCarnotHeatPump;
+		let heatPumpOutput = Math.abs(this.heatPumpState) * HeatPumpCapacity;
+		let heatPumpInput = heatPumpOutput / COPCarnotHeatPump;
 		let ventilation = VentilationConsumption * this.ventilationThroughput * delta;
 		return (ventilation + heatPumpInput) / 1000;
 	}
@@ -145,28 +186,29 @@ class AdvancedModel {
 		this.previousCO2 = this.currentCO2;
 		this.numberOfPeople = numberOfPeople;
 
-        console.log("---------------------");
-        console.log(this.currentTemperature);
-        
-        this.currentCO2 = this.previousCO2 + this.ventilationSupply(delta) + this.ambientCo2Loss(delta) + this.co2Gain(delta);
+		// console.log("---------------------");
+		// console.log(this.currentTemperature);
 
-        this.currentTemperature =
+		this.currentCO2 = this.previousCO2 + this.ventilationSupply(delta) + this.ambientCo2Loss(delta) + this.co2Gain(delta);
+
+		this.currentTemperature =
 			this.previousTemperature -
 			(this.ambientWallHeatLoss(delta, this.previousTemperature, outsideTemp) - this.roomHeatGain(delta, numberOfPeople)) /
-				(MassAir * HeatCapacityAir + MassWall * HeatCapacityWall);
-        
-                console.log(this.currentTemperature);
-                
-        this.heatPumpUpdate(this.currentTemperature);
-        
-        let tempChange = ((1 / (((((MassAir * HeatCapacityAir + MassWall * HeatCapacityWall) / 600) / HeatPumpCapacity) * 10) / 60)) / hour) * delta
-        this.currentTemperature = this.currentTemperature + this.heatPumpState * tempChange;
-        this.currentConsumption = this.consumption(delta);
+			(MassAir * HeatCapacityAir + MassWall * HeatCapacityWall);
 
-        this.ventilationUpdate();
-        if(this.rails.length > this.railIndex) {
-            this.railIndex++;
-        }
+		//console.log(this.currentTemperature);
+
+		let tempChange = ((1 / (((((MassAir * HeatCapacityAir + MassWall * HeatCapacityWall) / 600) / HeatPumpCapacity) * 10) / 60)) / hour) * delta
+		this.heatPumpUpdate(this.currentTemperature, tempChange);
+
+		this.currentTemperature = this.currentTemperature + this.heatPumpState * tempChange;
+		this.currentConsumption = this.consumption(delta);
+
+		this.ventilationUpdate();
+		if (this.rails.length > this.railIndex) {
+			this.railIndex++;
+		}
+		return { heatpump: this.heatPumpState, ventilation: this.ventilationThroughput };
 	}
 
 	predict(delta, data, responseRange, responseTarget) {
@@ -180,9 +222,9 @@ class AdvancedModel {
 			simulated.update(delta, datapoint.temperature, datapoint.people);
 			if (index >= responseRange.lower && index <= responseRange.higher) {
 				totalConsumption += simulated.consumption(delta);
-				if (simulated.heatPumpState == 1) {
+				if (simulated.heatPumpState > 0) {
 					heatCount++;
-				} else if (simulated.heatPumpState == -1) {
+				} else if (simulated.heatPumpState < 0) {
 					coolCount++;
 				}
 				if (simulated.ventilationThroughput > 0) {
@@ -214,6 +256,7 @@ class AdvancedModel {
 			totalConsumption = 0;
 			data.forEach((datapoint, index) => {
 				testModel.update(delta, datapoint.temperature, datapoint.people);
+				//console.log(`${index}\t | ${testModel.currentTemperature}\t ${testModel.heatPumpState}\t | ${testModel.currentCO2}\t | ${testModel.ventilationThroughput}`)
 				if (index >= responseRange.lower && index <= responseRange.higher) {
 					totalConsumption += testModel.consumption(delta);
 				}
@@ -235,7 +278,7 @@ class AdvancedModel {
 		newModel.heatPumpState = o.heatPumpState;
 		newModel.rails = o.rails;
 		newModel.railIndex = o.railIndex;
-        newModel.currentConsumption = o.currentConsumption;
+		newModel.currentConsumption = o.currentConsumption;
 		return newModel;
 	}
 
@@ -246,9 +289,9 @@ class AdvancedModel {
 
 function generateStateSequence(model, data, responseRange, delta, strategy) {
 	let strategies = strategy.split(" ");
-
 	let initialModel = model.copy();
 	let sequence = [];
+	//console.log(strategies)
 
 	if (strategies.includes("precool")) {
 		model.tempRangePeople.higher = model.tempRangePeople.lower;
@@ -260,18 +303,21 @@ function generateStateSequence(model, data, responseRange, delta, strategy) {
 	}
 	if (strategies.includes("ventilation")) {
 		model.CO2Rangekg.higher = model.CO2Rangekg.lower;
-		initialModel.averageOffSwitchOverride = true;
 	}
 
-	// console.log(model.tempRangePeople, model.tempRangeNoPeople)
 	for (var i = 0; i < responseRange.lower; i++) {
-		let prevConsumption = model.consumption(delta);
 		sequence[i] = model.update(delta, data[i].temperature, data[i].people);
-		//  console.log(`${hourNumber++} \t| ${prevConsumption} \t| ${model.currentCO2}\t| ${model.currentTemperature}`);
+	}
+	// reset ranges
+	model.tempRangePeople = initialModel.tempRangePeople;
+	model.tempRangeNoPeople = initialModel.tempRangeNoPeople;
+	model.CO2Rangekg = initialModel.CO2Rangekg;
+	model.powerSavingMode = true;
+	for (var i = responseRange.lower; i <= responseRange.higher; i++) {
+		sequence[i] = model.update(delta, data[i].temperature, data[i].people);
 	}
 
 	initialModel.rails = sequence;
-
 	return initialModel;
 }
 /*
