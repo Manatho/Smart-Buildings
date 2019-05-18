@@ -45,7 +45,7 @@ app.get("/data", (req, res) => {
 		let time = new Date(element.time * 1000);
 		time.setHours(time.getHours() - 1); // Convert to UTC
 		time.setMinutes(time.getMinutes() + 9); // Minute Offset to align with 00:00
-		let timeString = time.getHours() + ":" + time.getMinutes();
+		let timeString = (time.getHours()*60 + time.getMinutes());
 
 		response += `[${timeString}](${element.temperature.toFixed(2)}){${people[i]}},`;
 	});
