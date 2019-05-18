@@ -294,7 +294,7 @@ function generateStateSequence(model, data, responseRange, delta, strategy) {
 	let strategies = strategy.split(" ");
 	let initialModel = model.copy();
 	let sequence = [];
-	//console.log(strategies)
+	console.log(strategies)
 
 	if (strategies.includes("precool")) {
 		model.tempRangePeople.higher = model.tempRangePeople.lower;
