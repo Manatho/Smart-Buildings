@@ -259,7 +259,7 @@ class AdvancedModel {
 			totalConsumption = 0;
 			data.forEach((datapoint, index) => {
 				testModel.update(delta, datapoint.temperature, datapoint.people);
-				//console.log(`${index}\t | ${testModel.currentTemperature}\t ${testModel.heatPumpState}\t | ${testModel.currentCO2}\t | ${testModel.ventilationThroughput}`)
+				console.log(`${index}\t | ${testModel.currentTemperature}\t ${testModel.heatPumpState}\t | ${testModel.currentCO2}\t | ${testModel.ventilationThroughput}`)
 				if (index >= responseRange.lower && index <= responseRange.higher) {
 					totalConsumption += testModel.consumption(delta);
 				}
