@@ -123,7 +123,7 @@ app.get("/predict", (req, res) => {
 	let co2Model = new AdvancedModel(predict.startTemp, predict.roomDimensions, predict.startCO2, predict.comfortRange, predict.emptyRange);
     let result = co2Model.predict(predict.timestep, predict.data, predict.demandRange, predict.demandPower);
 
-	let response = `[${result.possible}],`;
+	let response = `${result.possible.toString()[0]}[${result.stateSequence.length}]`;
 
 	result.stateSequence.forEach(state => {
 		response += `(${state.heatpump}:${state.ventilation}),`
