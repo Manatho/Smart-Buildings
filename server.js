@@ -47,7 +47,7 @@ app.get("/data", (req, res) => {
 		time.setMinutes(time.getMinutes() + 9); // Minute Offset to align with 00:00
 		let timeString = time.getHours() + ":" + time.getMinutes();
 
-		response += `[${timeString}](${element.temperature.toFixed(2)}){${people[i]}}\n`;
+		response += `[${timeString}](${element.temperature.toFixed(2)}){${people[i]}},`;
 	});
 	res.send(response);
 });
@@ -123,10 +123,10 @@ app.get("/predict", (req, res) => {
 	let co2Model = new AdvancedModel(predict.startTemp, predict.roomDimensions, predict.startCO2, predict.comfortRange, predict.emptyRange);
     let result = co2Model.predict(predict.timestep, predict.data, predict.demandRange, predict.demandPower);
 
-	let response = `[${result.possible}]\n`;
+	let response = `[${result.possible}],`;
 
 	result.stateSequence.forEach(state => {
-		response += `(${state.heatpump}:${state.ventilation})\n`
+		response += `(${state.heatpump}:${state.ventilation}),`
 	});
 
 
