@@ -6,7 +6,7 @@ const AdvancedModel = require('./public/scripts/modelCO2Advanced').AdvancedModel
 
 const port = process.env.PORT;
 const data = require("./public/weatherdata.json");
-const liveDataLength = 50;
+const liveDataLength = 350;
 
 //On server start it will update last predicted
 fs.copyFileSync("./DummyData/lastPredict.json", "./public/predicted.json");
