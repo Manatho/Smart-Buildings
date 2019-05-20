@@ -41,7 +41,7 @@ function render(predict) {
     Temperature: <b>${predict.startTemp}&#176;</b> &nbsp;&nbsp; Room: <b>${co2Model.roomVolume}m&#179;</b> &nbsp&nbsp CO2: <b>${predict.startCO2}kg</b> &nbsp &nbsp<br>
     Comfort Range: <b>${predict.comfortRange.lower}&#176</b> to <b>${predict.comfortRange.higher}&#176</b> if empty:  <b>${predict.emptyRange.lower}&#176</b> to <b>${predict.emptyRange.higher}&#176</b><br>
     CO2 Range: <b>${co2Model.CO2Rangekg.lower}kg</b> to <b>${co2Model.CO2Rangekg.higher}kg</b> for a room size <b>${co2Model.roomVolume}m&#179;</b><br><br>
-    DemandResponse: <b>${("0" + (((predict.demandRange.lower*10)/60) << 0)).slice(-2)}:${("0" + ((predict.demandRange.lower*10)%60)).slice(-2)}</b> to <b>${("0" + (((predict.demandRange.higher*10)/60) << 0)).slice(-2)}:${("0" + ((predict.demandRange.higher*10)%60)).slice(-2)}</b>kW/h <br>
+    DemandResponse: <b>${("0" + (((predict.demandRange.lower*10)/60) << 0)).slice(-2)}:${("0" + ((predict.demandRange.lower*10)%60)).slice(-2)}</b> to <b>${("0" + (((predict.demandRange.higher*10)/60) << 0)).slice(-2)}:${("0" + ((predict.demandRange.higher*10)%60)).slice(-2)}</b> with <b>${predict.demandPower}</b>kW/h <br>
     Could fulfill: <b>${result.possible.toString().toUpperCase()}</b><br>
     Consumption without <b>${defaultConsumption.toFixed(2)}</b>kW/h with <b>${optimizedConsumption.toFixed(2)}</b>kW/h 
     </div> 
