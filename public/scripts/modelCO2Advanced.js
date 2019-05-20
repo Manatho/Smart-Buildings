@@ -217,6 +217,8 @@ class AdvancedModel {
 	predict(delta, data, responseRange, responseTarget) {
 		let simulated = this.copy();
 		let totalConsumption = 0;
+		let totalPeriodConsumption = 0;
+		let totalPeriodConsumptionNew = 0;
 
 		let heatCount = 0;
 		let coolCount = 0;
@@ -234,6 +236,7 @@ class AdvancedModel {
 					ventilation += simulated.ventilationThroughput;
 				}
 			}
+			totalPeriodConsumption += simulated.consumption(delta);
 		});
 		if (totalConsumption > responseTarget) {
 			let testModel = {};
@@ -255,7 +258,6 @@ class AdvancedModel {
 					}
 				}
 			}
-
 			totalConsumption = 0;
 			data.forEach((datapoint, index) => {
 				testModel.update(delta, datapoint.temperature, datapoint.people);
@@ -263,14 +265,15 @@ class AdvancedModel {
 				if (index >= responseRange.lower && index <= responseRange.higher) {
 					totalConsumption += testModel.consumption(delta);
 				}
+				totalPeriodConsumptionNew += testModel.consumption(delta);
 			});
 			if (totalConsumption > responseTarget) {
-				return { possible: false, stateSequence: [] };
+				return { possible: false, stateSequence: [], default: totalPeriodConsumption, optimized: totalPeriodConsumptionNew };
 			} else {
-				return { possible: true, stateSequence: testModel.rails };
+				return { possible: true, stateSequence: testModel.rails, default: totalPeriodConsumption, optimized: totalPeriodConsumptionNew };
 			}
 		} else {
-			return { possible: true, stateSequence: [] };
+			return { possible: true, stateSequence: [], default: totalPeriodConsumption, optimized: totalPeriodConsumptionNew};
 		}
 	}
 

@@ -20,8 +20,11 @@ function render(predict) {
     let co2Model = new AdvancedModel(predict.startTemp, predict.roomDimensions, predict.startCO2, predict.comfortRange, predict.emptyRange);
     let result = co2Model.predict(predict.timestep, predict.data, predict.demandRange, predict.demandPower);
     co2Model.rails = result.stateSequence;
+    let defaultConsumption = result.default;
+    let optimizedConsumption = result.optimized;
     //console.log(result);
-
+    //console.log(defaultConsumption, optimizedConsumption);
+    
 
     let hourNumber = 0;
     let showData = [];
@@ -38,7 +41,8 @@ function render(predict) {
     Comfort Range: <b>${predict.comfortRange.lower}&#176</b> to <b>${predict.comfortRange.higher}&#176</b> if empty:  <b>${predict.emptyRange.lower}&#176</b> to <b>${predict.emptyRange.higher}&#176</b><br>
     CO2 Range: <b>${co2Model.CO2Rangekg.lower}kg</b> to <b>${co2Model.CO2Rangekg.higher}kg</b> for a room size <b>${co2Model.roomVolume}m&#179;</b><br><br>
     DemandResponse: <b>${predict.demandRange.lower}</b> to <b>${predict.demandRange.higher}</b> with <b>${predict.demandPower}</b>kW/h <br>
-    Could fulfill: <b>${result.possible.toString().toUpperCase()}</b>
+    Could fulfill: <b>${result.possible.toString().toUpperCase()}</b><br>
+    Consumption without <b>${defaultConsumption.toFixed(2)}</b>kW/h with <b>${optimizedConsumption.toFixed(2)}</b>kW/h 
     </div> 
     <h2>Data</h2>
     <div style="background-color: #efefef; white-space: nowrap; font-size:px; overflow-y: scroll; height: 43%;">
