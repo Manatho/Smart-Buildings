@@ -268,12 +268,12 @@ class AdvancedModel {
 				totalPeriodConsumptionNew += testModel.consumption(delta);
 			});
 			if (totalConsumption > responseTarget) {
-				return { possible: false, stateSequence: [], default: totalPeriodConsumption, optimized: totalPeriodConsumptionNew };
+				return { possible: false, stateSequence: [], default: totalPeriodConsumption, optimized: totalPeriodConsumption };
 			} else {
 				return { possible: true, stateSequence: testModel.rails, default: totalPeriodConsumption, optimized: totalPeriodConsumptionNew };
 			}
 		} else {
-			return { possible: true, stateSequence: [], default: totalPeriodConsumption, optimized: totalPeriodConsumptionNew};
+			return { possible: true, stateSequence: [], default: totalPeriodConsumption, optimized: totalPeriodConsumption};
 		}
 	}
 
